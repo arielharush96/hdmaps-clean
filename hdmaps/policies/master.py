@@ -123,7 +123,10 @@ def load_models(agent_path: str | None, master_path: str | None):
     from hdmaps.policies.agent import load_agent
 
     master = MasterModel()
-    if master_path and Path(master_path).is_file():
-        master.load(str(master_path))
+    if master_path:
+        if not Path(master_path).is_file():
+            raise FileNotFoundError(master_path)
+        if not master.load(str(master_path)):
+            raise FileNotFoundError(master_path)
     agent = load_agent(agent_path or "")
     return master, agent

@@ -1,0 +1,14 @@
+base_complete_scenarios_6_cars = []
+conflict_base_scenarios = []
+EXCLUDED_SCENARIO_INDICES = set()
+HELD_OUT_SCENARIO_INDICES = set()
+CONFLICT_HELD_OUT_INDICES = set()
+roundabout_base_scenarios = []
+roundabout_conflict_base_scenarios = []
+ROUNDABOUT_HELD_OUT_INDICES = set()
+ROUNDABOUT_CONFLICT_HELD_OUT_INDICES = set()
+double_intersection_base_scenarios = []
+double_intersection_conflict_base_scenarios = []
+DOUBLE_INTERSECTION_HELD_OUT_INDICES = set()
+DOUBLE_INTERSECTION_EXCLUDED_INDICES = set()
+DOUBLE_INTERSECTION_CONFLICT_HELD_OUT_INDICES = set()

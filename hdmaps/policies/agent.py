@@ -62,15 +62,15 @@ def make_agent(learning_rate: float = TRAIN_AGENT_LR) -> PPO:
 
 
 def load_agent(path: str) -> PPO:
+    if not path:
+        return make_agent()
     env = _StaticEnv(AGENT_OBS_DIM)
-    if path and Path(path).is_file():
-        try:
-            loaded = PPO.load(path, env=env, device="cpu")
-            if is_paper_agent(loaded):
-                return loaded
-        except Exception:
-            pass
-    return make_agent()
+    if not Path(path).is_file():
+        raise FileNotFoundError(path)
+    loaded = PPO.load(path, env=env, device="cpu")
+    if not is_paper_agent(loaded):
+        raise FileNotFoundError(path)
+    return loaded
 
 
 def agent_act(agent_model: PPO, observations: list[np.ndarray], deterministic: bool):

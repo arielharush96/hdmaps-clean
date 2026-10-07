@@ -48,9 +48,10 @@ def pack_node(
     while len(slots) < NUM_MASTER_SLOTS:
         slots.append(unused_slot())
     slots = slots[:NUM_MASTER_SLOTS]
-    if permute:
-        order = (rng.permutation(len(slots)) if rng is not None else np.random.permutation(len(slots)))
-        slots = [slots[int(i)] for i in order]
+    if permute and len(slots) > 1:
+        kids = slots[1:]
+        order = rng.permutation(len(kids)) if rng is not None else np.random.permutation(len(kids))
+        slots = [slots[0]] + [kids[int(i)] for i in order]
     return np.concatenate(slots).astype(np.float32)
 
 

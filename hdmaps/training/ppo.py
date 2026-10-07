@@ -24,7 +24,29 @@ def _as_tensor(x, dtype=torch.float32):
     return x if torch.is_tensor(x) else torch.as_tensor(x, dtype=dtype)
 
 
+def _flatten_trajs(stream: list[dict]):
+    by: dict = {}
+    order = []
+    for tr in stream:
+        tid = tr.get('tid')
+        if tid is None:
+            tid = ('row', len(order))
+        if tid not in by:
+            by[tid] = []
+            order.append(tid)
+        by[tid].append(tr)
+    flat = []
+    starts = []
+    for tid in order:
+        traj = by[tid]
+        for i, tr in enumerate(traj):
+            flat.append(tr)
+            starts.append(1.0 if i == 0 else 0.0)
+    return flat, starts
+
+
 def update_continuous(policy, stream: list[dict], *, obs_dim: int = MASTER_OBS_DIM, act_dim: int = EMBEDDING_DIM):
+    stream, starts = _flatten_trajs(stream)
     if len(stream) < 2:
         return None
     buf = RolloutBuffer(
@@ -37,14 +59,14 @@ def update_continuous(policy, stream: list[dict], *, obs_dim: int = MASTER_OBS_D
     )
     last_obs = None
     for i, tr in enumerate(stream):
-        last_obs = tr["obs"]
+        last_obs = tr['obs']
         buf.add(
-            obs=np.asarray(tr["obs"], np.float32).reshape(1, -1),
-            action=np.asarray(tr["action"], np.float32).reshape(1, -1),
-            reward=np.array([tr["reward"]], np.float32),
-            episode_start=np.array([1.0 if i == 0 else 0.0], np.float32),
-            value=torch.as_tensor([[tr["value"]]], dtype=torch.float32),
-            log_prob=torch.as_tensor([tr["log_prob"]], dtype=torch.float32),
+            obs=np.asarray(tr['obs'], np.float32).reshape(1, -1),
+            action=np.asarray(tr['action'], np.float32).reshape(1, -1),
+            reward=np.array([tr['reward']], np.float32),
+            episode_start=np.array([starts[i]], np.float32),
+            value=torch.as_tensor([[tr['value']]], dtype=torch.float32),
+            log_prob=torch.as_tensor([tr['log_prob']], dtype=torch.float32),
         )
         if buf.full:
             break
@@ -88,14 +110,15 @@ def update_continuous(policy, stream: list[dict], *, obs_dim: int = MASTER_OBS_D
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), 0.5)
                 policy.optimizer.step()
             last_loss = {
-                "policy_loss": float(policy_loss.detach()),
-                "value_loss": float(value_loss.detach()),
-                "total_loss": float(loss.detach()),
+                'policy_loss': float(policy_loss.detach()),
+                'value_loss': float(value_loss.detach()),
+                'total_loss': float(loss.detach()),
             }
     return last_loss
 
 
 def update_discrete(policy, stream: list[dict]):
+    stream, starts = _flatten_trajs(stream)
     if len(stream) < 2:
         return None
     buf = RolloutBuffer(
@@ -108,14 +131,14 @@ def update_discrete(policy, stream: list[dict]):
     )
     last_obs = None
     for i, tr in enumerate(stream):
-        last_obs = tr["obs"]
+        last_obs = tr['obs']
         buf.add(
-            obs=np.asarray(tr["obs"], np.float32).reshape(1, -1),
-            action=np.array([int(tr["action"])], np.float32),
-            reward=np.array([tr["reward"]], np.float32),
-            episode_start=np.array([1.0 if i == 0 else 0.0], np.float32),
-            value=torch.as_tensor([[tr["value"]]], dtype=torch.float32),
-            log_prob=torch.as_tensor([tr["log_prob"]], dtype=torch.float32),
+            obs=np.asarray(tr['obs'], np.float32).reshape(1, -1),
+            action=np.array([int(tr['action'])], np.float32),
+            reward=np.array([tr['reward']], np.float32),
+            episode_start=np.array([starts[i]], np.float32),
+            value=torch.as_tensor([[tr['value']]], dtype=torch.float32),
+            log_prob=torch.as_tensor([tr['log_prob']], dtype=torch.float32),
         )
         if buf.full:
             break
@@ -158,7 +181,7 @@ def update_discrete(policy, stream: list[dict]):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), 0.5)
                 policy.optimizer.step()
-            last_loss = {"total_loss": float(loss.detach())}
+            last_loss = {'total_loss': float(loss.detach())}
     return last_loss
 
 
@@ -168,7 +191,7 @@ def update_master(master, stream: list[dict]):
 
 def update_master_roles(master, streams_by_role: dict[str, list[dict]]):
     losses = {}
-    for role in ("lm", "im", "gm"):
+    for role in ('lm', 'im', 'gm'):
         info = update_master(master, list(streams_by_role.get(role) or []))
         if info is not None:
             losses[role] = info

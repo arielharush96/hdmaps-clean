@@ -119,6 +119,7 @@ def run_training_episode(
             role = rec.get("role", "lm")
             master_streams.setdefault(role, []).append(
                 {
+                    "tid": (role, rec.get("tree_level", 0), rec.get("tree_idx", 0)),
                     "obs": rec["obs"],
                     "action": rec["action"],
                     "value": rec["value"],
@@ -129,6 +130,7 @@ def run_training_episode(
         for j, a_idx in enumerate(order):
             worker_stream.append(
                 {
+                    "tid": int(a_idx),
                     "obs": obs_list[j],
                     "action": int(acts[j]),
                     "value": float(w_val[j]),

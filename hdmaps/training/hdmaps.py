@@ -33,14 +33,13 @@ from hdmaps.training.rollout import run_training_episode
 
 def sample_stage1(rng: np.random.Generator) -> dict:
     n_agents = int(rng.choice([1, 2, 3, 3, 4, 4]))
-    mixed = bool(n_agents >= 3 and rng.random() < 0.5)
-    sc = _retry(lambda: generate_single_intersection(n_agents, rng, mixed=mixed))
+    sc = _retry(lambda: generate_single_intersection(n_agents, rng, mixed=False))
     sc["connector_length"] = SIM_CONNECTOR_M
     return {
         "n_int": 1,
         "n_agents": n_agents,
         "connector": SIM_CONNECTOR_M,
-        "mixed": mixed,
+        "mixed": False,
         "scenario": sc,
     }
 
@@ -229,6 +228,7 @@ def train_loop(
     master_buf: dict[str, list] = {"lm": [], "im": [], "gm": []}
     worker_buf: list = []
     max_steps = 8 if smoke else TRAIN_MAX_STEPS
+    prev_phase = None
 
     for ep in range(start_ep, n_episodes):
         if smoke:
@@ -267,15 +267,28 @@ def train_loop(
             rng=rng,
             mixed=mixed,
         )
-        for role, stream in role_streams.items():
-            master_buf.setdefault(role, []).extend(stream)
-        worker_buf.extend(worker_stream)
         phase = "joint" if smoke else _phase(ep)
         n_updates = 0
+        if prev_phase is not None and phase != prev_phase:
+            if prev_phase in ("joint", "master"):
+                n_updates += _flush_master(master, master_buf, 2, force=True)
+            if prev_phase in ("joint", "worker"):
+                n_updates += _flush_worker(agent, worker_buf, 2, force=True)
+            for key in list(master_buf):
+                master_buf[key] = []
+            worker_buf.clear()
         if phase in ("joint", "master"):
+            for role, stream in role_streams.items():
+                for tr in stream:
+                    tr["tid"] = (ep, tr.get("tid"))
+                master_buf.setdefault(role, []).extend(stream)
             n_updates += _flush_master(master, master_buf, TRAIN_ROLLOUT, force=False)
         if phase in ("joint", "worker"):
+            for tr in worker_stream:
+                tr["tid"] = (ep, tr.get("tid"))
+            worker_buf.extend(worker_stream)
             n_updates += _flush_worker(agent, worker_buf, TRAIN_ROLLOUT, force=False)
+        prev_phase = phase
         row = {
             "episode": ep + 1,
             "n_int": n_int,

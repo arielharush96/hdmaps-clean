@@ -1,0 +1,4 @@
+class Experiment:
+    FIXED_THROTTLE = 12
+    HIGH_SPEED_REWARD = 5
+    STARVATION_REWARD = -5

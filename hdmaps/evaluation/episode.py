@@ -9,8 +9,11 @@ from hdmaps.protocol import DETERMINISTIC_AGENT, DETERMINISTIC_MASTER
 
 def _groups_from_cell(cell):
     zones = cell.agent_zones()
+    arrived = cell.arrived_mask()
     by = {}
     for i, z in enumerate(zones):
+        if bool(arrived[i]):
+            continue
         by.setdefault(int(z), []).append(i)
     return [by[z] for z in sorted(by)], zones
 

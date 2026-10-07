@@ -8,8 +8,8 @@ def repo_root() -> Path:
 
 
 def agent_checkpoint() -> Path:
-    return repo_root() / "models" / "agent" / "agent.pth"
+    return repo_root() / "outputs" / "train" / "agent.pth"
 
 
 def master_checkpoint() -> Path:
-    return repo_root() / "models" / "master" / "master.pth"
+    return repo_root() / "outputs" / "train" / "master.pth"
