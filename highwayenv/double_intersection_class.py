@@ -26,8 +26,8 @@ class DoubleIntersectionEnv(IntersectionEnv):
 
 
     OUTER_EXIT_TARGETS = {
-        , "A_o1", "A_o2",
-        , "B_o2", "B_o3",
+        "A_o0", "A_o1", "A_o2",
+        "B_o0", "B_o2", "B_o3",
     }
 
     def _make_road(self) -> None:

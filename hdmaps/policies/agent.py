@@ -46,7 +46,7 @@ def is_paper_agent(model: PPO) -> bool:
 def make_agent(learning_rate: float = TRAIN_AGENT_LR) -> PPO:
     env = _StaticEnv(AGENT_OBS_DIM)
     return PPO(
-        ,
+        "MlpPolicy",
         env,
         learning_rate=float(learning_rate),
         n_steps=TRAIN_ROLLOUT,

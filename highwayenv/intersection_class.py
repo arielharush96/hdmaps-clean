@@ -114,10 +114,10 @@ class IntersectionEnv(AbstractEnv):
     def _agent_rewards(self, vehicle: Vehicle) -> dict[str, float]:
 
         return {
-            : vehicle.crashed,
-            : 1,
-            : self.has_arrived(vehicle),
-            : True
+            "collision_reward": vehicle.crashed,
+            "high_speed_reward": 1,
+            "arrived_reward": self.has_arrived(vehicle),
+            "starvation_reward": True
         }
 
     def update_after_is_arrived_flags(self):
@@ -207,8 +207,8 @@ class IntersectionEnv(AbstractEnv):
             rotated_agents = [rotate_scenario_clockwise([agent], rotation)[0] for agent in scenario["agents"]]
             rotated_static = [rotate_scenario_clockwise([static], rotation)[0] for static in scenario["static"]]
             return {
-                : rotated_agents,
-                : rotated_static
+                "agents": rotated_agents,
+                "static": rotated_static
             }
 
 
@@ -391,8 +391,8 @@ class IntersectionEnv(AbstractEnv):
             )
             end = rotation @ np.array([lane_width / 2, outer_distance])
             net.add_lane(
-                 + str(corner),
-                 + str(corner),
+                "o" + str(corner),
+                "ir" + str(corner),
                 StraightLane(
                     start, end, line_types=[s, c], priority=priority, speed_limit=10
                 ),
@@ -400,8 +400,8 @@ class IntersectionEnv(AbstractEnv):
 
             r_center = rotation @ (np.array([outer_distance, outer_distance]))
             net.add_lane(
-                 + str(corner),
-                 + str((corner - 1) % 4),
+                "ir" + str(corner),
+                "il" + str((corner - 1) % 4),
                 CircularLane(
                     r_center,
                     right_turn_radius,
@@ -422,8 +422,8 @@ class IntersectionEnv(AbstractEnv):
                 )
             )
             net.add_lane(
-                 + str(corner),
-                 + str((corner + 1) % 4),
+                "ir" + str(corner),
+                "il" + str((corner + 1) % 4),
                 CircularLane(
                     l_center,
                     left_turn_radius,
@@ -439,8 +439,8 @@ class IntersectionEnv(AbstractEnv):
             start = rotation @ np.array([lane_width / 2, outer_distance])
             end = rotation @ np.array([lane_width / 2, -outer_distance])
             net.add_lane(
-                 + str(corner),
-                 + str((corner + 2) % 4),
+                "ir" + str(corner),
+                "il" + str((corner + 2) % 4),
                 StraightLane(
                     start, end, line_types=[s, n], priority=priority, speed_limit=10
                 ),
@@ -451,8 +451,8 @@ class IntersectionEnv(AbstractEnv):
             )
             end = rotation @ np.flip([lane_width / 2, outer_distance], axis=0)
             net.add_lane(
-                 + str((corner - 1) % 4),
-                 + str((corner - 1) % 4),
+                "il" + str((corner - 1) % 4),
+                "o" + str((corner - 1) % 4),
                 StraightLane(
                     end, start, line_types=[n, c], priority=priority, speed_limit=10
                 ),
@@ -566,7 +566,7 @@ class IntersectionEnv(AbstractEnv):
 
     def has_arrived(self, vehicle: Vehicle, exit_distance: float = 25) -> bool:
         return (
-                 in vehicle.lane_index[0]
+                "il" in vehicle.lane_index[0]
                 and "o" in vehicle.lane_index[1]
                 and vehicle.lane.local_coordinates(vehicle.position)[0] >= exit_distance
         )
@@ -578,19 +578,19 @@ class MultiAgentIntersectionEnv(IntersectionEnv):
         config = super().default_config()
         config.update(
             {
-                : {
-                    : "MultiAgentAction",
-                    : {
-                        : "DiscreteMetaAction",
-                        : False,
-                        : True,
+                "action": {
+                    "type": "MultiAgentAction",
+                    "action_config": {
+                        "type": "DiscreteMetaAction",
+                        "lateral": False,
+                        "longitudinal": True,
                     },
                 },
-                : {
-                    : "MultiAgentObservation",
-                    : {"type": "Kinematics"},
+                "observation": {
+                    "type": "MultiAgentObservation",
+                    "observation_config": {"type": "Kinematics"},
                 },
-                : 2,
+                "controlled_vehicles": 2,
             }
         )
         return config
@@ -602,26 +602,26 @@ class ContinuousIntersectionEnv(IntersectionEnv):
         config = super().default_config()
         config.update(
             {
-                : {
-                    : "Kinematics",
-                    : 5,
-                    : [
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
-                        ,
+                "observation": {
+                    "type": "Kinematics",
+                    "vehicles_count": 5,
+                    "features": [
+                        "presence",
+                        "x",
+                        "y",
+                        "vx",
+                        "vy",
+                        "long_off",
+                        "lat_off",
+                        "ang_off",
                     ],
                 },
-                : {
-                    : "ContinuousAction",
-                    : [-np.pi / 3, np.pi / 3],
-                    : True,
-                    : True,
-                    : True,
+                "action": {
+                    "type": "ContinuousAction",
+                    "steering_range": [-np.pi / 3, np.pi / 3],
+                    "longitudinal": True,
+                    "lateral": True,
+                    "dynamical": True,
                 },
             }
         )

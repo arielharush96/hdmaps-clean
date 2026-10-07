@@ -62,7 +62,7 @@ class MasterModel:
         self.last_raw = np.zeros((0, self.embedding_size), dtype=np.float32)
         env = _MasterEnv(self.observation_dim, self.embedding_size)
         self.model = PPO(
-            ,
+            "MlpPolicy",
             env,
             learning_rate=float(kwargs.get("learning_rate", TRAIN_MASTER_LR)),
             n_steps=TRAIN_ROLLOUT,

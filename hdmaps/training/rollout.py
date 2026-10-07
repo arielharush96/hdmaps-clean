@@ -119,33 +119,33 @@ def run_training_episode(
             role = rec.get("role", "lm")
             master_streams.setdefault(role, []).append(
                 {
-                    : rec["obs"],
-                    : rec["action"],
-                    : rec["value"],
-                    : rec["log_prob"],
-                    : rec["reward"],
+                    "obs": rec["obs"],
+                    "action": rec["action"],
+                    "value": rec["value"],
+                    "log_prob": rec["log_prob"],
+                    "reward": rec["reward"],
                 }
             )
         for j, a_idx in enumerate(order):
             worker_stream.append(
                 {
-                    : obs_list[j],
-                    : int(acts[j]),
-                    : float(w_val[j]),
-                    : float(w_lp[j]),
-                    : rewards[a_idx],
+                    "obs": obs_list[j],
+                    "action": int(acts[j]),
+                    "value": float(w_val[j]),
+                    "log_prob": float(w_lp[j]),
+                    "reward": rewards[a_idx],
                 }
             )
         arrived_prev = arrived_now
 
     result = {
-        : 100.0 * cell.n_arrived() / max(1, cell.n_agents),
-        : int(cell.crashed),
-        : int(cell.n_arrived()),
-        : float(episode_reward),
-        : steps,
-        : len(groups),
-        : cell.n_int,
-        : cell.n_agents,
+        "arrival_pct": 100.0 * cell.n_arrived() / max(1, cell.n_agents),
+        "crashed": int(cell.crashed),
+        "arrived": int(cell.n_arrived()),
+        "reward": float(episode_reward),
+        "steps": steps,
+        "n_lms": len(groups),
+        "n_int": cell.n_int,
+        "n_agents": cell.n_agents,
     }
     return result, master_streams, worker_stream

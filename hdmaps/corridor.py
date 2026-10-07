@@ -30,23 +30,23 @@ class Corridor:
         controlled = {}
         for i in range(self.n_agents):
             controlled[f"car{i + 1}"] = {
-                : ("I0_o0", "I0_ir0", 0),
-                : "I0_o2",
-                : 5,
-                : {"longitudinal": 40, "lateral": 0},
-                : [0, 204, 0],
+                "start_lane": ("I0_o0", "I0_ir0", 0),
+                "destination": "I0_o2",
+                "speed": 5,
+                "init_location": {"longitudinal": 40, "lateral": 0},
+                "color": [0, 204, 0],
             }
         cfg = full_env_config(
             {
-                : controlled,
-                : {},
-                : self.n_int,
-                : self.connector_length,
-                : [],
-                : True,
-                : self.duration,
-                : 1,
-                : 0,
+                "controlled_cars": controlled,
+                "static_cars": {},
+                "n_intersections": self.n_int,
+                "connector_length": self.connector_length,
+                "chain_scenarios": [],
+                "chain_scenarios_only": True,
+                "duration": self.duration,
+                "policy_frequency": 1,
+                "initial_vehicle_count": 0,
             }
         )
         cfg["action"]["target_speeds"] = list(target_speeds)

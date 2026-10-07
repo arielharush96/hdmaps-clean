@@ -54,7 +54,7 @@ class RoundaboutEnv(IntersectionEnv):
             approach_outer = junction + outward * access_length + approach_shift
             approach_inner = junction + approach_shift
             net.add_lane(
-                 + str(corner), "ir" + str(corner),
+                "o" + str(corner), "ir" + str(corner),
                 StraightLane(approach_outer, approach_inner,
                              line_types=[s, c], priority=1, speed_limit=speed_limit),
             )
@@ -65,7 +65,7 @@ class RoundaboutEnv(IntersectionEnv):
             ang_end   = ang_start - np.pi / 2
 
             net.add_lane(
-                 + str(corner), "ir" + str(prev_corner),
+                "ir" + str(corner), "ir" + str(prev_corner),
                 CircularLane(
                     center, radius,
                     ang_start, ang_end,
@@ -78,7 +78,7 @@ class RoundaboutEnv(IntersectionEnv):
             exit_conn_start = junction + exit_shift
             exit_conn_end   = junction + outward * connector_length + exit_shift
             net.add_lane(
-                 + str(corner), "il" + str(corner),
+                "ir" + str(corner), "il" + str(corner),
                 StraightLane(exit_conn_start, exit_conn_end,
                              line_types=[n, n], priority=1, speed_limit=speed_limit),
             )
@@ -86,7 +86,7 @@ class RoundaboutEnv(IntersectionEnv):
 
             exit_outer = exit_conn_end + outward * access_length
             net.add_lane(
-                 + str(corner), "o" + str(corner),
+                "il" + str(corner), "o" + str(corner),
                 StraightLane(exit_conn_end, exit_outer,
                              line_types=[n, c], priority=0, speed_limit=speed_limit),
             )

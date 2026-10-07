@@ -20,10 +20,10 @@ class ChainIntersectionEnv(IntersectionEnv):
     def default_config(cls) -> dict:
         config = super().default_config()
         config.update({
-            : 2,
-            : 80,
-            : [],
-            : True,
+            "n_intersections": 2,
+            "connector_length": 80,
+            "chain_scenarios": [],
+            "chain_scenarios_only": True,
         })
         return config
 

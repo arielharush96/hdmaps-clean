@@ -88,9 +88,9 @@ def update_continuous(policy, stream: list[dict], *, obs_dim: int = MASTER_OBS_D
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), 0.5)
                 policy.optimizer.step()
             last_loss = {
-                : float(policy_loss.detach()),
-                : float(value_loss.detach()),
-                : float(loss.detach()),
+                "policy_loss": float(policy_loss.detach()),
+                "value_loss": float(value_loss.detach()),
+                "total_loss": float(loss.detach()),
             }
     return last_loss
 

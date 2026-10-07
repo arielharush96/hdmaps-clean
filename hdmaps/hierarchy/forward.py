@@ -74,15 +74,15 @@ def run_fanout_hierarchy(
         new_plans[0][levels[0][i]["idx"]] = emb
         records.append(
             {
-                : "lm",
-                : 0,
-                : i,
-                : np.asarray(packed_lm[i], dtype=np.float32),
-                : np.asarray(raw[i], dtype=np.float32).reshape(-1)[:EMBEDDING_DIM],
-                : emb,
-                : float(vals[i]),
-                : float(lps[i]),
-                : list(grp),
+                "role": "lm",
+                "tree_level": 0,
+                "tree_idx": i,
+                "obs": np.asarray(packed_lm[i], dtype=np.float32),
+                "action": np.asarray(raw[i], dtype=np.float32).reshape(-1)[:EMBEDDING_DIM],
+                "emb": emb,
+                "value": float(vals[i]),
+                "log_prob": float(lps[i]),
+                "agents": list(grp),
             }
         )
     child_embs = lm_embs
@@ -114,15 +114,15 @@ def run_fanout_hierarchy(
             new_plans[ell][node["idx"]] = emb
             records.append(
                 {
-                    : "gm" if ell == len(levels) - 1 else "im",
-                    : ell,
-                    : node["idx"],
-                    : np.asarray(packed[j], dtype=np.float32),
-                    : np.asarray(raw[j], dtype=np.float32).reshape(-1)[:EMBEDDING_DIM],
-                    : emb,
-                    : float(vals[j]),
-                    : float(lps[j]),
-                    : list(agent_sets[j]),
+                    "role": "gm" if ell == len(levels) - 1 else "im",
+                    "tree_level": ell,
+                    "tree_idx": node["idx"],
+                    "obs": np.asarray(packed[j], dtype=np.float32),
+                    "action": np.asarray(raw[j], dtype=np.float32).reshape(-1)[:EMBEDDING_DIM],
+                    "emb": emb,
+                    "value": float(vals[j]),
+                    "log_prob": float(lps[j]),
+                    "agents": list(agent_sets[j]),
                 }
             )
         child_embs = nxt

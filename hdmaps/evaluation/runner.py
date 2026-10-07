@@ -33,17 +33,17 @@ def _summarize(rows: list[dict], n_int: int, n_agents: int) -> dict:
     lo, hi = round_wilson(*wilson_interval(k, n))
     arr_mean, arr_sem = mean_sem(arrivals)
     return {
-        : n_agents,
-        : n_int,
-        : hierarchy_label(n_int),
-        : n,
-        : crash_pct,
-        : k,
-        : lo,
-        : hi,
-        : arr_mean,
-        : arr_sem,
-        : rows,
+        "fleet": n_agents,
+        "n_int": n_int,
+        "hierarchy": hierarchy_label(n_int),
+        "n_episodes": n,
+        "crash_pct": crash_pct,
+        "crash_k": k,
+        "crash_lo": lo,
+        "crash_hi": hi,
+        "arrival_pct": arr_mean,
+        "arrival_sem": arr_sem,
+        "episodes": rows,
     }
 
 
@@ -52,34 +52,24 @@ def evaluate_simultaneous(
     out_dir: Path | None = None,
     agent_path: Path | None = None,
     master_path: Path | None = None,
-    configs: tuple[tuple[int, int], ...] | None = None,
-    episodes_per_suite: int | None = None,
-    suites: tuple[str, ...] = ("varied", "uniform"),
 ) -> list[dict]:
     seed_all(0)
     master, agent = load_models(
         str(agent_path or agent_checkpoint()),
         str(master_path or master_checkpoint()),
     )
-    selected_configs = tuple(configs) if configs is not None else SCALE_CONFIGS
-    n_ep = int(100 if episodes_per_suite is None else episodes_per_suite)
     results = []
-    for n_int, n_agents in selected_configs:
+    for n_int, n_agents in SCALE_CONFIGS:
         cell = Corridor(n_int, n_agents, connector_length=150, duration=SIM_DURATION)
         rows = []
-        for suite, varied, seed in (
-            ("varied", True, SIM_VARIED_SEED),
-            ("uniform", False, SIM_UNIFORM_SEED),
-        ):
-            if suite not in suites:
-                continue
+        for varied, seed in ((True, SIM_VARIED_SEED), (False, SIM_UNIFORM_SEED)):
             rng = np.random.default_rng(seed)
-            for sc in generate_suite(n_int, n_agents, n_ep, rng, varied=varied):
+            for sc in generate_suite(n_int, n_agents, 100, rng, varied=varied):
                 rows.append(run_simultaneous_episode(cell, sc, master, agent, max_steps=SIM_MAX_STEPS))
         cell.close()
         results.append(_summarize(rows, n_int, n_agents))
         print(
-
+            "simultaneous fleet=%d crash=%.1f arrival=%.1f n=%d"
             % (n_agents, results[-1]["crash_pct"], results[-1]["arrival_pct"], results[-1]["n_episodes"]),
             flush=True,
         )
@@ -101,11 +91,10 @@ def evaluate_staggered(
         str(agent_path or agent_checkpoint()),
         str(master_path or master_checkpoint()),
     )
-    n_ep = STAG_EPISODES
     results = []
     for n_int, n_agents in SCALE_CONFIGS:
         rng = np.random.default_rng(STAG_SEED)
-        scenarios = [generate_staggered_scenario(n_int, n_agents, rng, varied=True) for _ in range(n_ep)]
+        scenarios = [generate_staggered_scenario(n_int, n_agents, rng, varied=True) for _ in range(STAG_EPISODES)]
         connector = int(scenarios[0]["connector_length"])
         duration = int(scenarios[0]["max_steps"])
         cell = Corridor(n_int, n_agents, connector_length=connector, duration=max(SIM_DURATION, duration))
@@ -120,7 +109,7 @@ def evaluate_staggered(
         cell.close()
         results.append(_summarize(rows, n_int, n_agents))
         print(
-
+            "staggered fleet=%d crash=%.1f n=%d"
             % (n_agents, results[-1]["crash_pct"], results[-1]["n_episodes"]),
             flush=True,
         )

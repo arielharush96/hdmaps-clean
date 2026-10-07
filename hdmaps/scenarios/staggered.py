@@ -39,9 +39,9 @@ def generate_staggered_scenario(
     for k, (lane, dest, off) in enumerate(scenario["agents"]):
         agents.append((lane, dest, float(off) - k * float(entry_spacing)))
     return {
-        : agents,
-        : [],
-        : connector,
-        : horizon_for_connector(connector),
-        : True,
+        "agents": agents,
+        "static": [],
+        "connector_length": connector,
+        "max_steps": horizon_for_connector(connector),
+        "staggered": True,
     }

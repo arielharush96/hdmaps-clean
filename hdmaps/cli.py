@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 import argparse
 from pathlib import Path
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(add_help=False)
@@ -22,8 +20,7 @@ def main(argv: list[str] | None = None) -> int:
         from hdmaps.evaluation.runner import evaluate_simultaneous, evaluate_staggered
         from hdmaps.statistics.tables import format_table
         out = args.out or Path("outputs") / "evaluate"
-        sim_rows = []
-        stag_rows = []
+        sim_rows, stag_rows = [], []
         if args.protocol in ("simultaneous", "both"):
             sim_rows = evaluate_simultaneous(out_dir=out, agent_path=args.agent, master_path=args.master)
         if args.protocol in ("staggered", "both"):
@@ -38,7 +35,6 @@ def main(argv: list[str] | None = None) -> int:
             print(train(out_dir=args.out, episodes=args.episodes, seed=args.seed))
         return 0
     return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

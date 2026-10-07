@@ -37,11 +37,11 @@ def sample_stage1(rng: np.random.Generator) -> dict:
     sc = _retry(lambda: generate_single_intersection(n_agents, rng, mixed=mixed))
     sc["connector_length"] = SIM_CONNECTOR_M
     return {
-        : 1,
-        : n_agents,
-        : SIM_CONNECTOR_M,
-        : mixed,
-        : sc,
+        "n_int": 1,
+        "n_agents": n_agents,
+        "connector": SIM_CONNECTOR_M,
+        "mixed": mixed,
+        "scenario": sc,
     }
 
 
@@ -52,12 +52,12 @@ def sample_stage2(rng: np.random.Generator) -> dict:
     sc = _retry(lambda: generate_scenario(n_int, n_agents, rng, varied=True))
     sc["connector_length"] = connector
     return {
-        : n_int,
-        : n_agents,
-        : connector,
-        : n_agents // n_int,
-        : False,
-        : sc,
+        "n_int": n_int,
+        "n_agents": n_agents,
+        "connector": connector,
+        "agents_per_int": n_agents // n_int,
+        "mixed": False,
+        "scenario": sc,
     }
 
 
@@ -233,12 +233,12 @@ def train_loop(
     for ep in range(start_ep, n_episodes):
         if smoke:
             spec = {
-                : 1,
-                : 3,
-                : 150,
-                : False,
-                : 3,
-                : generate_single_intersection(3, rng, mixed=False),
+                "n_int": 1,
+                "n_agents": 3,
+                "connector": 150,
+                "mixed": False,
+                "agents_per_int": 3,
+                "scenario": generate_single_intersection(3, rng, mixed=False),
             }
             spec["scenario"]["connector_length"] = 150
         else:
@@ -249,7 +249,7 @@ def train_loop(
         mixed = bool(spec.get("mixed", False))
         if (not smoke) and (n_int > TRAIN_N_INT or n_agents > TRAIN_MAX_AGENTS):
             raise ValueError(
-
+                "training cap is %d intersections / %d agents; got n_int=%d n_agents=%d"
                 % (TRAIN_N_INT, TRAIN_MAX_AGENTS, n_int, n_agents)
             )
         key = (n_int, n_agents, connector)
@@ -277,17 +277,17 @@ def train_loop(
         if phase in ("joint", "worker"):
             n_updates += _flush_worker(agent, worker_buf, TRAIN_ROLLOUT, force=False)
         row = {
-            : ep + 1,
-            : n_int,
-            : n_agents,
-            : connector,
-            : result["steps"],
-            : bool(result["crashed"]),
-            : int(result["arrived"]),
-            : float(result["reward"]),
-            : n_updates,
-            : phase,
-            : mixed,
+            "episode": ep + 1,
+            "n_int": n_int,
+            "n_agents": n_agents,
+            "connector": connector,
+            "steps": result["steps"],
+            "crashed": bool(result["crashed"]),
+            "arrived": int(result["arrived"]),
+            "reward": float(result["reward"]),
+            "n_updates": n_updates,
+            "phase": phase,
+            "mixed": mixed,
         }
         if "agents_per_int" in spec:
             row["agents_per_int"] = int(spec["agents_per_int"])
@@ -296,7 +296,7 @@ def train_loop(
         if (ep + 1) % 10 == 0 or ep == start_ep or (ep + 1) == n_episodes:
             elapsed = time.time() - t0
             print(
-
+                "[%s] ep %d/%d n_int=%d n_agents=%d steps=%d arrived=%d crashed=%s phase=%s n_updates=%d elapsed=%.0fs"
                 % (
                     label,
                     ep + 1,
@@ -326,18 +326,18 @@ def train_loop(
 
     _save_pair(master, agent, dest)
     summary = {
-        : label,
-        : n_episodes,
-        : seed,
-        : lr,
-        : str(master_path) if master_path else None,
-        : str(agent_path) if agent_path else None,
-        : time.time() - t0,
-        : start_ep,
-        : TRAIN_JOINT_EPISODES,
-        : max_steps,
-        : None,
-        : None,
+        "stage": label,
+        "episodes": n_episodes,
+        "seed": seed,
+        "lr": lr,
+        "master_init": str(master_path) if master_path else None,
+        "agent_init": str(agent_path) if agent_path else None,
+        "elapsed_sec": time.time() - t0,
+        "resumed_from": start_ep,
+        "joint_episodes": TRAIN_JOINT_EPISODES,
+        "max_steps": max_steps,
+        "mean_arrival": None,
+        "crash_rate": None,
     }
     rows = (
         [json.loads(line) for line in history_path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -351,7 +351,7 @@ def train_loop(
         summary["max_n_agents"] = int(max(r["n_agents"] for r in rows))
     _write_summary(dest, summary)
     print(
-
+        "[%s] done mean_arrival=%.1f crash_rate=%.1f"
         % (label, summary["mean_arrival"] or 0.0, summary["crash_rate"] or 0.0),
         flush=True,
     )
